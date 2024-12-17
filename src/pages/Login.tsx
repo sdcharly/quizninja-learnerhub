@@ -14,25 +14,53 @@ const Login = () => {
   
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Fetch user profile and set role
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileData) {
-          localStorage.setItem("userRole", profileData.user_type);
-          navigate(`/${profileData.user_type}-dashboard`);
-          toast({
-            title: "Success",
-            description: "Logged in successfully!",
-          });
+      try {
+        console.log("Checking session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
         }
+
+        if (session?.user) {
+          console.log("Session found, fetching profile for user:", session.user.id);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_type')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            throw profileError;
+          }
+
+          if (profileData) {
+            console.log("Profile found:", profileData);
+            localStorage.setItem("userRole", profileData.user_type);
+            navigate(`/${profileData.user_type}-dashboard`);
+            toast({
+              title: "Success",
+              description: "Logged in successfully!",
+            });
+          } else {
+            console.log("No profile found for user");
+            setIsLoading(false);
+          }
+        } else {
+          console.log("No active session");
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error in checkSession:", error);
+        toast({
+          title: "Error",
+          description: "Failed to check login status",
+          variant: "destructive",
+        });
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     checkSession();
@@ -41,33 +69,44 @@ const Login = () => {
       console.log("Auth state changed:", event, session);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        setIsLoading(true);
-        // Fetch user profile and set role
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', session.user.id)
-          .single();
+        try {
+          setIsLoading(true);
+          console.log("Fetching profile for signed in user:", session.user.id);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_type')
+            .eq('id', session.user.id)
+            .single();
 
-        if (error) {
-          console.error("Error fetching profile:", error);
+          if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            throw profileError;
+          }
+
+          if (profileData) {
+            console.log("Profile found:", profileData);
+            localStorage.setItem("userRole", profileData.user_type);
+            navigate(`/${profileData.user_type}-dashboard`);
+            toast({
+              title: "Success",
+              description: "Logged in successfully!",
+            });
+          } else {
+            console.log("No profile found for signed in user");
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error("Error handling sign in:", error);
           toast({
             title: "Error",
             description: "Failed to fetch user profile",
             variant: "destructive",
           });
           setIsLoading(false);
-          return;
         }
-
-        if (profileData) {
-          localStorage.setItem("userRole", profileData.user_type);
-          navigate(`/${profileData.user_type}-dashboard`);
-          toast({
-            title: "Success",
-            description: "Logged in successfully!",
-          });
-        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
+        localStorage.removeItem("userRole");
         setIsLoading(false);
       }
     });
