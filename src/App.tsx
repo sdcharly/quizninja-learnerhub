@@ -28,10 +28,8 @@ const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode; 
 
 const App = () => {
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Fetch user profile and set role
         const { data: profileData } = await supabase
           .from('profiles')
           .select('user_type')

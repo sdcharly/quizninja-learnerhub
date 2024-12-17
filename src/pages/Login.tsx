@@ -15,7 +15,6 @@ const Login = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log("Checking session...");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -24,32 +23,34 @@ const Login = () => {
           return;
         }
 
-        if (session?.user) {
-          console.log("Session found, fetching profile for user:", session.user.id);
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_type')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error("Profile fetch error:", profileError);
-            setIsLoading(false);
-            return;
-          }
-
-          if (profileData) {
-            console.log("Profile found:", profileData);
-            localStorage.setItem("userRole", profileData.user_type);
-            navigate(`/${profileData.user_type}-dashboard`);
-          } else {
-            console.log("No profile found for user");
-            setIsLoading(false);
-          }
-        } else {
+        if (!session?.user) {
           console.log("No active session");
           setIsLoading(false);
+          return;
         }
+
+        console.log("Session found, fetching profile for user:", session.user.id);
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!profileData) {
+          console.log("No profile found for user");
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Profile found:", profileData);
+        localStorage.setItem("userRole", profileData.user_type);
+        navigate(`/${profileData.user_type}-dashboard`);
       } catch (error) {
         console.error("Error in checkSession:", error);
         setIsLoading(false);
@@ -62,31 +63,22 @@ const Login = () => {
       console.log("Auth state changed:", event, session);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          console.log("Fetching profile for signed in user:", session.user.id);
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_type')
-            .eq('id', session.user.id)
-            .single();
+        console.log("Fetching profile for signed in user:", session.user.id);
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', session.user.id)
+          .single();
 
-          if (profileError) {
-            console.error("Profile fetch error:", profileError);
-            setIsLoading(false);
-            return;
-          }
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+          return;
+        }
 
-          if (profileData) {
-            console.log("Profile found:", profileData);
-            localStorage.setItem("userRole", profileData.user_type);
-            navigate(`/${profileData.user_type}-dashboard`);
-          } else {
-            console.log("No profile found for signed in user");
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error("Error handling sign in:", error);
-          setIsLoading(false);
+        if (profileData) {
+          console.log("Profile found:", profileData);
+          localStorage.setItem("userRole", profileData.user_type);
+          navigate(`/${profileData.user_type}-dashboard`);
         }
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out");
@@ -142,7 +134,7 @@ const Login = () => {
                 anchor: 'text-primary hover:text-primary/80',
               },
             }}
-            providers={['google']}
+            providers={[]}
             view="sign_in"
             showLinks={true}
             redirectTo={`${window.location.origin}/auth/callback`}
