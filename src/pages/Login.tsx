@@ -15,12 +15,19 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === "teacher@example.com" && password === "password") {
-      localStorage.setItem("userRole", "teacher");
-      navigate("/teacher-dashboard");
-    } else if (email === "student@example.com" && password === "password") {
-      localStorage.setItem("userRole", "student");
-      navigate("/student-dashboard");
+    
+    // For demo purposes, we'll check localStorage
+    // In a real app, this would be handled by a backend service
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    const user = users.find((u: any) => u.email === email && u.password === password);
+    
+    if (user) {
+      localStorage.setItem("userRole", user.role);
+      navigate(`/${user.role}-dashboard`);
+      toast({
+        title: "Success",
+        description: "Logged in successfully!",
+      });
     } else {
       toast({
         title: "Login Failed",
