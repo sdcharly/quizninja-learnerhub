@@ -72,6 +72,7 @@ const Login = () => {
             providers={['google']}
             view="sign_in"
             showLinks={true}
+            onlyThirdPartyProviders={true}
             redirectTo={`${window.location.origin}/auth/callback`}
           />
         </CardContent>
