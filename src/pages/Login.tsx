@@ -19,6 +19,11 @@ const Login = () => {
         
         if (sessionError) {
           console.error("Session error:", sessionError);
+          toast({
+            title: "Error",
+            description: "Failed to check session. Please try again.",
+            variant: "destructive",
+          });
           setIsLoading(false);
           return;
         }
@@ -29,7 +34,7 @@ const Login = () => {
           return;
         }
 
-        console.log("Session found, fetching profile for user:", session.user.id);
+        // Attempt to get or create profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('user_type')
@@ -38,12 +43,22 @@ const Login = () => {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
+          toast({
+            title: "Error",
+            description: "Failed to load user profile. Please try again.",
+            variant: "destructive",
+          });
           setIsLoading(false);
           return;
         }
 
         if (!profileData) {
           console.log("No profile found for user");
+          toast({
+            title: "Error",
+            description: "User profile not found. Please contact support.",
+            variant: "destructive",
+          });
           setIsLoading(false);
           return;
         }
@@ -53,6 +68,11 @@ const Login = () => {
         navigate(`/${profileData.user_type}-dashboard`);
       } catch (error) {
         console.error("Error in checkSession:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
         setIsLoading(false);
       }
     };
@@ -63,7 +83,6 @@ const Login = () => {
       console.log("Auth state changed:", event, session);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log("Fetching profile for signed in user:", session.user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('user_type')
@@ -72,6 +91,11 @@ const Login = () => {
 
         if (profileError) {
           console.error("Profile fetch error:", profileError);
+          toast({
+            title: "Error",
+            description: "Failed to load user profile. Please try again.",
+            variant: "destructive",
+          });
           return;
         }
 
