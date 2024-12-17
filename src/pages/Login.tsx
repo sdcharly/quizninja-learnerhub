@@ -14,7 +14,6 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, hardcode a teacher and student login
     if (email === "teacher@example.com" && password === "password") {
       localStorage.setItem("userRole", "teacher");
       navigate("/teacher-dashboard");
