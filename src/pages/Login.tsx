@@ -34,7 +34,7 @@ const Login = () => {
           return;
         }
 
-        // Attempt to get or create profile
+        // Get profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('user_type')
@@ -63,7 +63,6 @@ const Login = () => {
           return;
         }
 
-        console.log("Profile found:", profileData);
         localStorage.setItem("userRole", profileData.user_type);
         navigate(`/${profileData.user_type}-dashboard`);
       } catch (error) {
@@ -80,9 +79,10 @@ const Login = () => {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session);
+      console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_IN' && session?.user) {
+        // Get profile data after sign in
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('user_type')
@@ -100,12 +100,10 @@ const Login = () => {
         }
 
         if (profileData) {
-          console.log("Profile found:", profileData);
           localStorage.setItem("userRole", profileData.user_type);
           navigate(`/${profileData.user_type}-dashboard`);
         }
       } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out");
         localStorage.removeItem("userRole");
         setIsLoading(false);
       }
